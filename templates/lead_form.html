@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lead Entry Form</title>
+</head>
+<body>
+    <h2>Submit Lead</h2>
+<form method="POST">
+  <input name="name" placeholder="Name" required><br>
+  <input name="phone" placeholder="Phone Number" required><br>
+  <input name="comment" placeholder="Comment"><br>
+  <input name="who_met" placeholder="Who Met"><br>
+  <input name="location" placeholder="Location"><br>
+  <button type="submit">Submit</button>
+</form>
+
+<hr>
+
+<h3>Last 3 Entries</h3>
+{% for entry in entries %}
+  <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+    <p><strong>Name:</strong> {{ entry.data.name }}</p>
+    <p><strong>Phone:</strong> {{ entry.data.phone }}</p>
+    <p><strong>Comment:</strong> {{ entry.data.comment }}</p>
+    <p><strong>Who Met:</strong> {{ entry.data.who_met }}</p>
+    <p><strong>Date:</strong> {{ entry.data.date }}</p>
+    <p><strong>Location:</strong> {{ entry.data.location }}</p>
+    <form action="{{ url_for('edit_entry', entry_id=entry.id) }}" method="GET">
+      <button type="submit">Edit</button>
+    </form>
+  </div>
+{% endfor %}
+
+    </ul>
+</body>
+</html>
