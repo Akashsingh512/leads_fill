@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Lead Entry Form</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <h2>Submit Lead</h2>
@@ -9,8 +10,48 @@
   <input name="name" placeholder="Name" required><br>
   <input name="phone" placeholder="Phone Number" required><br>
   <input name="comment" placeholder="Comment"><br>
-  <input name="who_met" placeholder="Who Met"><br>
   <input name="location" placeholder="Location"><br>
+  <label for="who_met">Who Met:</label>
+  <select name="who_met" id="who_met">
+    <option value="" disabled selected>Select a person</option>
+    <option value="Heli">Heli</option>
+    <option value="Aakash">Aakash</option>
+    <option value="Bhavik">Bhavik</option>
+    <option value="add_new">Add New</option>
+  </select>
+  <br>
+  <div id="add_new_who_met" style="display: none;">
+    <input name="new_who_met" id="new_who_met" placeholder="Enter new name"><br>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const whoMetSelect = document.getElementById('who_met');
+      const addNewDiv = document.getElementById('add_new_who_met');
+      const newWhoMetInput = document.getElementById('new_who_met');
+
+      whoMetSelect.addEventListener('change', function() {
+        if (this.value === 'add_new') {
+          addNewDiv.style.display = 'block';
+          newWhoMetInput.required = true;
+        } else {
+          addNewDiv.style.display = 'none';
+          newWhoMetInput.required = false;
+        }
+      });
+
+      // Ensure the selected value is updated correctly
+      document.querySelector('form').addEventListener('submit', function(event) {
+        if (whoMetSelect.value === 'add_new' && newWhoMetInput.value.trim() !== '') {
+          const newValue = newWhoMetInput.value.trim();
+          const newOption = document.createElement('option');
+          newOption.value = newValue;
+          newOption.textContent = newValue;
+          newOption.selected = true;
+          whoMetSelect.appendChild(newOption);
+        }
+      });
+    });
+  </script>
   <button type="submit">Submit</button>
 </form>
 

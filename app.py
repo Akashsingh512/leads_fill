@@ -5,10 +5,10 @@ from datetime import datetime
 import uuid
 from pytz import timezone
 
-IST = timezone('Asia/Kolkata')
-now = datetime.now(IST)
-from datetime import timedelta
+# Initialize the Flask app
 app = Flask(__name__)
+
+# Set secret key for session handling
 app.secret_key = '611b5ff2e01220fa8df00578e1353cbcd4e519a8'  # Replace with a secure secret key
 
 # Setup Google Sheets API
@@ -24,6 +24,22 @@ def append_lead(data):
     full_row = data + empty_followups
     sheet.append_row(full_row)
 
+# Timezone for IST (India Standard Time)
+IST = timezone('Asia/Kolkata')
+
+# Define Users and Credentials (for login)
+USERS = {
+    'admin': {
+        'password': 'admin123',
+        'role': 'superadmin'
+    },
+    'user1': {
+        'password': 'user123',
+        'role': 'user'
+    }
+}
+
+# Lead Form Route (Public)
 @app.route('/', methods=['GET', 'POST'])
 def lead_form():
     if request.method == 'POST':
@@ -36,7 +52,7 @@ def lead_form():
             request.form['who_met'],
             now.strftime('%Y-%m-%d'),           # Only the date
             request.form['location']
-            ]
+        ]
 
         append_lead(data)
 
@@ -53,6 +69,78 @@ def lead_form():
         return redirect(url_for('lead_form'))
 
     return render_template('lead_form.html', entries=session.get('entries', []))
+
+# Login Route
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = USERS.get(username)
+
+        if user and user['password'] == password:
+            session['user'] = username
+            session['role'] = user['role']
+            print(f"User logged in: {session['user']}, Role: {session['role']}")  # Debugging log
+            return redirect(url_for('admin_dashboard'))  # Redirect to admin dashboard
+        else:
+            error = 'Invalid credentials'
+
+    return render_template('login.html', error=error)
+
+# Logout Route
+@app.route('/logout')
+def logout():
+    session.clear()  # Clear the session
+    return redirect(url_for('login'))  # Redirect back to login page
+
+# Admin Dashboard Route
+# @app.route('/admin')
+
+# def admin_dashboard():
+#      # Authenticate and fetch the worksheet
+#     sheet = client.open_by_key("1G9u4zMuA9fbcsoIAJ0a7aQZAkrpS9fUjS5pnguav8C8").sheet1
+
+#     # Manually fetch only the first row (headers)
+#     raw_headers = sheet.row_values(1)
+#     headers = raw_headers[:19]  # Columns A to S
+
+#     # Now fetch the rest of the data
+#     data = sheet.get_all_records(expected_headers=headers)
+
+#     return render_template('admin_dashboard.html', data=data)
+
+
+@app.route('/admin')
+def admin_dashboard():
+    if "user" not in session:
+        return redirect("/login")
+
+    try:
+        # Move the credentials and client setup HERE if not global
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+        client = gspread.authorize(creds)
+
+        # Open spreadsheet
+        spreadsheet_id = "1G9u4zMuA9fbcsolAJo7aQZAkrpS9fUjS5pnguav8C8"
+        worksheet = client.open_by_key(spreadsheet_id).sheet1
+
+        # Read and slice data (columns A to S => 0 to 18)
+        data = worksheet.get_all_values()
+        data = [row[:19] for row in data]
+
+        return render_template("admin.html", user=session.get("email"), data=data)
+
+    except Exception as e:
+        return f"<h3>Error loading admin dashboard: {e}</h3>"
+
+
+
+
+# old code upper
+# # Edit Entry Route
 @app.route('/edit/<entry_id>', methods=['GET', 'POST'])
 def edit_entry(entry_id):
     entries = session.get('entries', [])
@@ -88,6 +176,6 @@ def edit_entry(entry_id):
 
     return render_template('edit_entry.html', entry=entry)
 
-
+# Main Entry Point
 if __name__ == '__main__':
     app.run(debug=True)
