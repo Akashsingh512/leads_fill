@@ -39,6 +39,7 @@ USERS = {
     }
 }
 
+
 # Lead Form Route (Public)
 @app.route('/', methods=['GET', 'POST'])
 def lead_form():
@@ -118,27 +119,38 @@ def admin_dashboard():
         return redirect("/login")
 
     try:
-        # Move the credentials and client setup HERE if not global
-        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-        creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
-        client = gspread.authorize(creds)
-
-        # Open spreadsheet
-        spreadsheet_id = "1G9u4zMuA9fbcsolAJo7aQZAkrpS9fUjS5pnguav8C8"
+        # Open spreadsheet (you can use the global client if already initialized)
+        spreadsheet_id = "1G9u4zMuA9fbcsoIAJ0a7aQZAkrpS9fUjS5pnguav8C8"  # Correct spreadsheet ID
         worksheet = client.open_by_key(spreadsheet_id).sheet1
 
-        # Read and slice data (columns A to S => 0 to 18)
+        # Get all data (including headers)
         data = worksheet.get_all_values()
-        data = [row[:19] for row in data]
+        # Example: data[0] is header row, data[1:] is the actual data
 
-        return render_template("admin.html", user=session.get("email"), data=data)
+        return render_template("admin.html", user=session.get("user"), data=data)
 
     except Exception as e:
         return f"<h3>Error loading admin dashboard: {e}</h3>"
 
+from flask import request, jsonify
 
+@app.route('/update_followup_cell', methods=['POST'])
+def update_followup_cell():
+    try:
+        data = request.get_json()
+        row = int(data['row'])   # 1-based index in Google Sheets (including header row)
+        col = int(data['col']) + 1 # gspread is 1-based columns
 
+        value = data['value']
 
+        # Open the sheet
+        spreadsheet_id = "YOUR_SHEET_ID"
+        worksheet = client.open_by_key(spreadsheet_id).sheet1
+
+        worksheet.update_cell(row, col, value)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 # old code upper
 # # Edit Entry Route
 @app.route('/edit/<entry_id>', methods=['GET', 'POST'])

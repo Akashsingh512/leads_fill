@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <style>
+        table, th, td { border:1px solid #333; border-collapse: collapse; padding: 4px; }
+        .call-btn {
+            margin-left: 8px;
+            padding: 2px 6px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .wa-btn {
+            margin-left: 5px;
+            padding: 2px 6px;
+            background: #25d366;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome, {{ user }}!</h1>
+    <h2>Leads Dashboard</h2>
+    <table>
+        <thead>
+            <tr>
+                {% for col in data[0] %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% set ns = namespace(row_idx=0) %}
+            {% for row in data[1:] %}
+            <tr>
+                {% for cell in row %}
+                    {% set col_idx = loop.index0 %}
+                    {# Only add buttons in col 3 except for the first data row (row_idx=0) #}
+                    {% if col_idx == 2 and ns.row_idx != 0 %}
+                        <td>
+                            {{ cell }}
+                            {% if cell|length > 0 %}
+                                <a href="tel:{{ cell }}" class="call-btn">Call</a>
+                                <a href="https://wa.me/{{ cell }}" class="wa-btn" target="_blank">WhatsApp</a>
+                            {% endif %}
+                        </td>
+                    {% else %}
+                        <td>{{ cell }}</td>
+                    {% endif %}
+                {% endfor %}
+            </tr>
+            {% set ns.row_idx = ns.row_idx + 1 %}
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{{ url_for('logout') }}">Logout</a>
+</body>
+</html>
