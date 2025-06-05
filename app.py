@@ -134,59 +134,106 @@ def admin_dashboard():
 
 from flask import request, jsonify
 
+# @app.route('/update_followup_cell', methods=['POST'])
+# def update_followup_cell():
+#     try:
+#         data = request.get_json()
+#         row = int(data['row'])   # 1-based index in Google Sheets (including header row)
+#         col = int(data['col']) + 1 # gspread is 1-based columns
+
+#         value = data['value']
+
+#         # Open the sheet
+#         spreadsheet_id = "YOUR_SHEET_ID"
+#         worksheet = client.open_by_key(spreadsheet_id).sheet1
+
+#         worksheet.update_cell(row, col, value)
+#         return jsonify({'success': True})
+#     except Exception as e:
+#         return jsonify({'success': False, 'error': str(e)})
+# old code upper
+# # Edit Entry Route
+# @app.route('/edit_entry/<entry_id>', methods=['GET', 'POST'])
+# def edit_entry(entry_id):
+#     if request.method == 'POST':
+#         # Update the entry in the session
+#         for entry in session['entries']:
+#             if entry['id'] == entry_id:
+#                 entry['data']['name'] = request.form['name']
+#                 entry['data']['phone'] = request.form['phone']
+#                 entry['data']['comment'] = request.form['comment']
+#                 entry['data']['who_met'] = request.form['who_met']
+#                 entry['data']['date'] = request.form['date']
+#                 entry['data']['location'] = request.form['location']
+#                 break
+
+#         return redirect(url_for('lead_form'))
+
+#     # Find the entry to edit
+#     entry_data = next((entry for entry in session.get('entries', []) if entry['id'] == entry_id), None)
+#     return render_template('edit_entry.html', entry=entry_data)
+
+
+
 @app.route('/update_followup_cell', methods=['POST'])
 def update_followup_cell():
     try:
         data = request.get_json()
-        row = int(data['row'])   # 1-based index in Google Sheets (including header row)
-        col = int(data['col']) + 1 # gspread is 1-based columns
-
+        row = int(data['row'])  # 0-based row index (excluding header)
+        field = data['field']
         value = data['value']
 
-        # Open the sheet
-        spreadsheet_id = "YOUR_SHEET_ID"
+        # Define which field maps to which column
+        field_column_map = {
+    'FollowUp1_Comment': 7,
+    'FollowUp1_Date': 8,
+    'FollowUp1_WhoCalled': 9,
+    'FollowUp2_Comment': 10,
+    'FollowUp2_Date': 11,
+    'FollowUp2_WhoCalled': 12,
+    'FollowUp3_Comment': 13,
+    'FollowUp3_Date': 14,
+    'FollowUp3_WhoCalled': 15,
+    'FollowUp4_Comment': 16,
+    'FollowUp4_Date': 17,
+    'FollowUp4_WhoCalled': 18
+}
+
+
+        col_index = field_column_map.get(field)
+        if col_index is None:
+            return jsonify({'success': False, 'error': 'Invalid field'})
+
+        # Open sheet
+        spreadsheet_id = "1G9u4zMuA9fbcsoIAJ0a7aQZAkrpS9fUjS5pnguav8C8"
         worksheet = client.open_by_key(spreadsheet_id).sheet1
 
-        worksheet.update_cell(row, col, value)
+        # +2 because row is 0-based, and first row is header
+        worksheet.update_cell(row + 2, col_index + 1, value)
+
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
-# old code upper
-# # Edit Entry Route
-@app.route('/edit/<entry_id>', methods=['GET', 'POST'])
+
+@app.route('/edit_entry/<entry_id>', methods=['GET', 'POST'])
 def edit_entry(entry_id):
-    entries = session.get('entries', [])
-    entry = next((e for e in entries if e['id'] == entry_id), None)
-    if not entry:
-        return "Entry not found", 404
-
     if request.method == 'POST':
-        # Update session data
-        entry['data']['name'] = request.form['name']
-        entry['data']['phone'] = request.form['phone']
-        entry['data']['comment'] = request.form['comment']
-        entry['data']['who_met'] = request.form['who_met']
-        entry['data']['location'] = request.form['location']
-        session['entries'] = entries
-        session.modified = True
-
-        # Update Google Sheet (find by timestamp)
-        all_rows = sheet.get_all_records()
-        for i, row in enumerate(all_rows, start=2):  # Offset for header
-            if row['Timestamp'] == entry['data']['timestamp']:
-                sheet.update(f'B{i}', [[
-                    entry['data']['name'],
-                    entry['data']['phone'],
-                    entry['data']['comment'],
-                    entry['data']['who_met'],
-                    entry['data']['date'],
-                    entry['data']['location']
-                ]])
+        # Update the entry in the session
+        for entry in session['entries']:
+            if entry['id'] == entry_id:
+                entry['data']['name'] = request.form['name']
+                entry['data']['phone'] = request.form['phone']
+                entry['data']['comment'] = request.form['comment']
+                entry['data']['who_met'] = request.form['who_met']
+                entry['data']['date'] = request.form['date']
+                entry['data']['location'] = request.form['location']
                 break
 
         return redirect(url_for('lead_form'))
 
-    return render_template('edit_entry.html', entry=entry)
+    # Find the entry to edit
+    entry_data = next((entry for entry in session.get('entries', []) if entry['id'] == entry_id), None)
+    return render_template('edit_entry.html', entry=entry_data)
 
 # Main Entry Point
 if __name__ == '__main__':

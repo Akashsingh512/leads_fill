@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html>
 <head>
     <title>Admin Dashboard</title>
@@ -61,6 +61,291 @@
             {% endfor %}
         </tbody>
     </table>
+    <a href="{{ url_for('logout') }}">Logout</a>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <style>
+        table, th, td { border: 1px solid #333; border-collapse: collapse; padding: 4px; }
+        .call-btn {
+            margin-left: 8px;
+            padding: 2px 6px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .wa-btn {
+            margin-left: 5px;
+            padding: 2px 6px;
+            background: #25d366;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        select, input[type="date"], button {
+            margin-right: 10px;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- <script>
+function editComment(rowIndex) {
+    const cell = document.getElementById(`fup1_comment_${rowIndex}`);
+    if (cell.dataset.filled === "true") return;
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.id = `input_comment_${rowIndex}`;
+    input.placeholder = "Enter comment";
+    input.addEventListener("blur", () => saveComment(rowIndex));
+    input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") input.blur(); // Save on Enter key
+    });
+
+    cell.innerHTML = "";
+    cell.appendChild(input);
+    input.focus();
+}
+
+function saveComment(rowIndex) {
+    const input = document.getElementById(`input_comment_${rowIndex}`);
+    const value = input.value.trim();
+    const cell = document.getElementById(`fup1_comment_${rowIndex}`);
+
+    if (!value) return;
+
+    cell.innerText = value;
+    cell.dataset.filled = "true";
+
+    const whoCalledCell = document.getElementById(`fup1_whocalled_${rowIndex}`);
+    whoCalledCell.innerHTML = `
+        <select onchange="saveWhoCalled(this, ${rowIndex})">
+            <option value="">Select</option>
+            <option value="Aakash">Aakash</option>
+            <option value="Team 1">Team 1</option>
+            <option value="Team 2">Team 2</option>
+        </select>
+    `;
+
+    sendUpdate(rowIndex, "FollowUp1_Comment", value);
+}
+
+function saveWhoCalled(select, rowIndex) {
+    const value = select.value;
+    const cell = document.getElementById(`fup1_whocalled_${rowIndex}`);
+    cell.innerText = value;
+    sendUpdate(rowIndex, "FollowUp1_WhoCalled", value);
+}
+
+function sendUpdate(rowIndex, field, value) {
+    fetch("/update_followup_cell", {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            row: rowIndex,
+            field: field,
+            value: value
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) {
+            alert("Failed to update sheet: " + (data.error || "Unknown error"));
+        }
+    })
+    .catch(err => {
+        console.error("Fetch error:", err);
+        alert("Request failed.");
+    });
+}
+</script> -->
+
+<script>
+function editComment(rowIndex, fupIndex) {
+    const cell = document.getElementById(`fup${fupIndex}_comment_${rowIndex}`);
+    if (cell.dataset.filled === "true") return;
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.placeholder = "Enter comment";
+    input.addEventListener("blur", () => saveComment(rowIndex, fupIndex, input));
+    input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") input.blur();
+    });
+
+    cell.innerHTML = "";
+    cell.appendChild(input);
+    input.focus();
+}
+
+function saveComment(rowIndex, fupIndex, input) {
+    const value = input.value.trim();
+    const cell = document.getElementById(`fup${fupIndex}_comment_${rowIndex}`);
+    if (!value) return;
+
+    cell.innerText = value;
+    cell.dataset.filled = "true";
+
+    const whoCalledCell = document.getElementById(`fup${fupIndex}_whocalled_${rowIndex}`);
+    whoCalledCell.innerHTML = `
+        <select onchange="saveWhoCalled(this, ${rowIndex}, ${fupIndex})">
+            <option value="">Select</option>
+            <option value="Aakash">Aakash</option>
+            <option value="Team 1">Team 1</option>
+            <option value="Team 2">Team 2</option>
+        </select>
+    `;
+
+    sendUpdate(rowIndex, `FollowUp${fupIndex}_Comment`, value);
+}
+
+function saveWhoCalled(select, rowIndex, fupIndex) {
+    const value = select.value;
+    const cell = document.getElementById(`fup${fupIndex}_whocalled_${rowIndex}`);
+    cell.innerText = value;
+    sendUpdate(rowIndex, `FollowUp${fupIndex}_WhoCalled`, value);
+}
+
+function sendUpdate(rowIndex, field, value) {
+    fetch("/update_followup_cell", {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ row: rowIndex, field, value })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) alert("Update failed: " + (data.error || "Unknown error"));
+    })
+    .catch(err => {
+        console.error("Fetch error:", err);
+        alert("Request failed.");
+    });
+}
+function editComment(rowIdx, fupNum) {
+    const tdId = `fup${fupNum}_comment_${rowIdx}`;
+    const td = document.getElementById(tdId);
+
+    if (!td) return;
+
+    // Create an input element or textarea to edit
+    const currentText = td.textContent.trim();
+    const input = document.createElement('textarea');
+    input.value = currentText === 'Click to add comment' ? '' : currentText;
+
+    // Replace td content with input
+    td.innerHTML = '';
+    td.appendChild(input);
+    input.focus();
+
+    // Handle saving on blur or enter key
+    input.addEventListener('blur', () => {
+        const newValue = input.value.trim();
+        td.textContent = newValue || 'Click to add comment';
+
+        // Send update to backend (adjust URL and payload accordingly)
+        fetch('/update_followup_cell', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                row: rowIdx, 
+                field: `FollowUp${fupNum}_Comment`, 
+                value: newValue
+            })
+        }).then(response => response.json())
+          .then(data => {
+              if (!data.success) {
+                  alert('Failed to save comment: ' + data.error);
+              }
+          });
+    });
+}
+
+</script>
+
+
+    <h1>Welcome, {{ user }}!</h1>
+    <h2>Leads Dashboard</h2>
+
+    <!-- Filter Form -->
+    <form method="GET">
+        <label for="who_met">Who Met:</label>
+        <select name="who_met" id="who_met">
+            <option value="">All</option>
+            {% for person in who_met_options %}
+                <option value="{{ person }}" {% if request.args.get('who_met') == person %}selected{% endif %}>{{ person }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="date">Date:</label>
+        <input type="date" name="date" id="date" value="{{ request.args.get('date', '') }}">
+
+        <button type="submit">Filter</button>
+        <a href="{{ url_for('admin_dashboard') }}">Clear Filters</a>
+    </form>
+
+    <!-- Leads Table -->
+   <table>
+    <thead>
+        <tr>
+            {% for col in data[0] %}
+                <th>{{ col }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% set ns = namespace(row_idx=0) %}
+        {% for row in data[1:] %}
+        <tr>
+            {% for cell in row %}
+                {% set col_idx = loop.index0 %}
+                {% if col_idx == 2 and ns.row_idx != 0 %}
+                    <td>
+                        {{ cell }}
+                        {% if cell|length > 0 %}
+                            <a href="tel:{{ cell }}" class="call-btn">Call</a>
+                            <a href="https://wa.me/{{ cell }}" class="wa-btn" target="_blank">WhatsApp</a>
+                        {% endif %}
+                    </td>
+                {% else %}
+                    {% set col_name = data[0][col_idx] %}
+
+                    {% if "FollowUp" in col_name and "_Comment" in col_name %}
+                        {% set fup_num = col_name[8]|int %}
+                        <td id="fup{{ fup_num }}_comment_{{ ns.row_idx }}"
+                            onclick="editComment({{ ns.row_idx }}, {{ fup_num }})"
+                            data-filled="{{ cell|length > 0 }}">
+                            {{ cell if cell else 'Click to add comment' }}
+                        </td>
+                    {% elif "FollowUp" in col_name and "_WhoCalled" in col_name %}
+                        {% set fup_num = col_name[8]|int %}
+                        <td id="fup{{ fup_num }}_whocalled_{{ ns.row_idx }}">
+                            {{ cell }}
+                        </td>
+                    {% else %}
+                        <td>{{ cell }}</td>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </tr>
+        {% set ns.row_idx = ns.row_idx + 1 %}
+        {% endfor %}
+    </tbody>
+</table>
+
+
     <a href="{{ url_for('logout') }}">Logout</a>
 </body>
 </html>
